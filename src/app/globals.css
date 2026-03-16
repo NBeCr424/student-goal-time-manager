@@ -1,0 +1,42 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 18% 20%, rgba(111, 211, 200, 0.28), transparent 42%),
+    radial-gradient(circle at 88% 10%, rgba(255, 152, 104, 0.2), transparent 34%),
+    linear-gradient(165deg, #f9fbf8 0%, #eef5ff 52%, #fff9f0 100%);
+  color: #1c2a28;
+}
+
+::selection {
+  background: rgba(111, 211, 200, 0.35);
+}
+
+.card-surface {
+  @apply rounded-soft border border-white/70 bg-white/80 shadow-card backdrop-blur;
+}
+
+.section-title {
+  @apply text-base font-semibold text-ink md:text-lg;
+}
+
+.soft-label {
+  @apply text-xs font-medium uppercase tracking-[0.12em] text-ink/65;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
