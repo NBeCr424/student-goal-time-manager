@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { calcStreak, fromDateKey, getWeekDates, todayKey } from "@/lib/date";
 import { useAppStore } from "@/store/app-store";
@@ -13,6 +13,8 @@ export function ProfilePage() {
   const weekCompleted = state.tasks.filter((task) => weekDates.includes(task.dueDate) && task.completed).length;
 
   const reviewStreak = calcStreak(state.reviews.map((entry) => entry.date));
+  const todayReview = state.reviews.find((entry) => entry.date === today);
+  const reviewHistory = [...state.reviews].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
 
   return (
     <div className="space-y-4">
@@ -36,6 +38,30 @@ export function ProfilePage() {
             <p className="mt-1 text-2xl font-semibold text-ink">{reviewStreak}</p>
           </article>
         </div>
+
+        <div className="mt-3 rounded-xl border border-ink/10 bg-white p-3 text-sm text-ink/75">
+          今日复盘状态：{todayReview ? "已完成" : "未完成"}
+        </div>
+      </section>
+
+      <section className="card-surface p-4 md:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="section-title">复盘历史</h3>
+          <span className="badge border-ink/15 bg-white text-ink/60">最近 {reviewHistory.length} 条</span>
+        </div>
+
+        <ul className="mt-3 space-y-2">
+          {reviewHistory.map((entry) => (
+            <li key={entry.id} className="rounded-xl border border-ink/10 bg-white p-3">
+              <p className="text-xs text-ink/55">{entry.date}</p>
+              <p className="mt-1 text-sm text-ink/80">做成：{entry.wins || "-"}</p>
+              <p className="mt-1 text-sm text-ink/80">浪费：{entry.wastedTime || "-"}</p>
+              <p className="mt-1 text-sm text-ink/80">明日改进：{entry.improveOneThing || "-"}</p>
+            </li>
+          ))}
+        </ul>
+
+        {reviewHistory.length === 0 && <p className="mt-3 text-sm text-ink/60">还没有复盘记录，建议今晚先完成一条。</p>}
       </section>
 
       <section className="grid gap-3 md:grid-cols-3">

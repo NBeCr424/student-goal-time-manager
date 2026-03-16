@@ -11,12 +11,169 @@ import {
   KnowledgeItem,
   KnowledgeNode,
   KnowledgeSubject,
+  NewsItem,
   ParsedImportTask,
   PdfKnowledgeDocument,
   QuickNote,
   Task,
+  TimelineItem,
+  WeatherInfo,
+  WeatherLocation,
   WeeklyPlan,
 } from "@/lib/types";
+
+const WEATHER_CONDITIONS = [
+  {
+    key: "shanghai",
+    condition: "Cloudy",
+    temperatureC: 23,
+    humidity: 58,
+    suggestion: "Good for focused study blocks before lunch.",
+    outfitTip: "Light jacket for evening commute.",
+  },
+  {
+    key: "beijing",
+    condition: "Sunny",
+    temperatureC: 19,
+    humidity: 42,
+    suggestion: "Great day for deep work sessions in the morning.",
+    outfitTip: "Long sleeve top and sunglasses.",
+  },
+  {
+    key: "guangzhou",
+    condition: "Humid",
+    temperatureC: 28,
+    humidity: 73,
+    suggestion: "Split study into shorter sessions to keep energy stable.",
+    outfitTip: "Breathable T-shirt and water bottle.",
+  },
+  {
+    key: "hangzhou",
+    condition: "Light Rain",
+    temperatureC: 21,
+    humidity: 79,
+    suggestion: "Prefer indoor reading and review tasks today.",
+    outfitTip: "Carry a compact umbrella.",
+  },
+];
+
+function pickWeatherByCity(city: string) {
+  const lower = city.toLowerCase();
+  return (
+    WEATHER_CONDITIONS.find((item) => lower.includes(item.key)) ?? {
+      key: "default",
+      condition: "Partly Cloudy",
+      temperatureC: 22,
+      humidity: 55,
+      suggestion: "Use your high-energy hours for key tasks.",
+      outfitTip: "Layered outfit is enough.",
+    }
+  );
+}
+
+export function getMockWeatherByCity(city: string, date: string = todayKey()): WeatherInfo {
+  const weather = pickWeatherByCity(city);
+  return {
+    date,
+    location: city,
+    condition: weather.condition,
+    temperatureC: weather.temperatureC,
+    humidity: weather.humidity,
+    suggestion: weather.suggestion,
+    outfitTip: weather.outfitTip,
+  };
+}
+
+function createWeatherLocations(today: string): WeatherLocation[] {
+  return [
+    {
+      id: "weather_shanghai",
+      city: "Shanghai",
+      label: "Shanghai",
+      isDefault: true,
+      createdAt: today,
+      updatedAt: today,
+    },
+    {
+      id: "weather_beijing",
+      city: "Beijing",
+      label: "Beijing",
+      isDefault: false,
+      createdAt: today,
+      updatedAt: today,
+    },
+    {
+      id: "weather_guangzhou",
+      city: "Guangzhou",
+      label: "Guangzhou",
+      isDefault: false,
+      createdAt: today,
+      updatedAt: today,
+    },
+  ];
+}
+
+function createNewsItems(today: string): NewsItem[] {
+  return [
+    {
+      id: "news_1",
+      title: "Campus library extends exam season opening hours",
+      summary: "Main campus library now opens until 23:30 on weekdays for the next three weeks.",
+      source: "Campus Bulletin",
+      publishedAt: `${today} 08:10`,
+    },
+    {
+      id: "news_2",
+      title: "Student dev challenge opens registration",
+      summary: "Teams can register for the 7-day product challenge focused on AI learning tools.",
+      source: "Student Tech Hub",
+      publishedAt: `${today} 09:00`,
+    },
+    {
+      id: "news_3",
+      title: "Public transit updates evening schedule",
+      summary: "Two major lines add extra departures after 22:00 this month.",
+      source: "City Transit",
+      publishedAt: `${today} 11:25`,
+    },
+    {
+      id: "news_4",
+      title: "Open lecture on focus and productivity this Friday",
+      summary: "Psychology department hosts a free lecture on reducing procrastination during exam prep.",
+      source: "University Events",
+      publishedAt: `${today} 13:45`,
+    },
+  ];
+}
+
+function createTimelineItems(today: string): TimelineItem[] {
+  return [
+    {
+      id: "timeline_manual_1",
+      type: "manual_schedule",
+      title: "Morning stretch and breakfast",
+      date: today,
+      startTime: "07:20",
+      endTime: "07:50",
+      status: "planned",
+      notes: "Keep this slot low effort to save cognitive energy.",
+      createdAt: today,
+      updatedAt: today,
+    },
+    {
+      id: "timeline_manual_2",
+      type: "manual_schedule",
+      title: "Commute and quick review cards",
+      date: today,
+      startTime: "08:10",
+      endTime: "08:40",
+      status: "planned",
+      notes: "Use flashcards while commuting.",
+      createdAt: today,
+      updatedAt: today,
+    },
+  ];
+}
 
 function createGoalTemplates(today: string): Goal[] {
   const baseDate = fromDateKey(today);
@@ -24,14 +181,14 @@ function createGoalTemplates(today: string): Goal[] {
   return [
     {
       id: "goal_english_6",
-      title: "英语六级 560+",
-      description: "在 6 周内完成阅读、听力、写作三轮强化，并在模拟考试达到 560 分以上。",
+      title: "CET-6 score above 560",
+      description: "Build reading, listening and writing routine in 6 weeks.",
       smart: {
-        specific: "每周完成 3 套阅读 + 2 套听力 + 2 篇作文。",
-        measurable: "每周日记录得分，目标从 480 提升到 560。",
-        achievable: "每天安排 60-90 分钟，不追求超长学习时段。",
-        relevant: "提升英语能力并满足奖学金申请要求。",
-        timeBound: "2026-04-25 前达到目标分数。",
+        specific: "3 reading sets + 2 listening sets + 2 writing practices each week.",
+        measurable: "Track score every Sunday, move from 480 to 560.",
+        achievable: "Keep 60-90 minute sessions per day.",
+        relevant: "Supports scholarship and internship goals.",
+        timeBound: "Reach target before 2026-04-25.",
       },
       deadline: toDateKey(addDays(baseDate, 40)),
       estimatedTotalHours: 42,
@@ -48,14 +205,14 @@ function createGoalTemplates(today: string): Goal[] {
     },
     {
       id: "goal_algo_final",
-      title: "数据结构期末 A",
-      description: "通过系统复习链表、树、图与复杂度分析，期末拿到 A。",
+      title: "Data structure final grade A",
+      description: "Review list/tree/graph and complexity with stable execution rhythm.",
       smart: {
-        specific: "完成课堂题库 120 题，整理错题本。",
-        measurable: "每周至少新增 25 道题并复盘。",
-        achievable: "晚间安排 90 分钟深度学习时段。",
-        relevant: "核心专业课成绩影响保研排名。",
-        timeBound: "2026-05-08 前完成 3 次全真模拟。",
+        specific: "Finish 120 practice questions and build an error notebook.",
+        measurable: "At least 25 new questions per week.",
+        achievable: "Use one 90-minute deep work slot every evening.",
+        relevant: "Core course grade affects ranking.",
+        timeBound: "Finish 3 mock exams before 2026-05-08.",
       },
       deadline: toDateKey(addDays(baseDate, 53)),
       estimatedTotalHours: 56,
@@ -72,14 +229,14 @@ function createGoalTemplates(today: string): Goal[] {
     },
     {
       id: "goal_run_habit",
-      title: "晨跑习惯 30 天",
-      description: "建立稳定晨跑习惯，提升专注力和精力稳定性。",
+      title: "30-day running habit",
+      description: "Build stable exercise habit to improve focus and sleep quality.",
       smart: {
-        specific: "每周至少跑步 4 天，每次 25-35 分钟。",
-        measurable: "打卡总时长与完成天数。",
-        achievable: "从低强度开始，避免受伤。",
-        relevant: "改善学习状态与睡眠质量。",
-        timeBound: "2026-05-20 前完成 30 天累计打卡。",
+        specific: "Run 4 days each week, 25-35 minutes each session.",
+        measurable: "Track total minutes and completed days.",
+        achievable: "Start from low intensity and avoid injury.",
+        relevant: "Helps maintain learning energy.",
+        timeBound: "Complete 30-day streak before 2026-05-20.",
       },
       deadline: toDateKey(addDays(baseDate, 65)),
       estimatedTotalHours: 20,
@@ -103,8 +260,8 @@ function createTasks(today: string): Task[] {
   return [
     {
       id: "task_today_1",
-      title: "英语阅读真题 2 篇 + 精读标注",
-      description: "完成后记录生词与长难句。",
+      title: "Two CET-6 reading passages with annotation",
+      description: "Mark vocabulary and long sentence structures.",
       completed: false,
       dueDate: today,
       priority: "high",
@@ -118,8 +275,8 @@ function createTasks(today: string): Task[] {
     },
     {
       id: "task_today_2",
-      title: "数据结构错题 20 题复刷",
-      description: "重点关注树与图遍历题。",
+      title: "Rework 20 data-structure mistakes",
+      description: "Focus on tree and graph traversal bugs.",
       completed: false,
       dueDate: today,
       priority: "high",
@@ -133,8 +290,8 @@ function createTasks(today: string): Task[] {
     },
     {
       id: "task_today_3",
-      title: "整理一页作文模板",
-      description: "输出到方法库，便于复用。",
+      title: "Write one-page writing template",
+      description: "Save reusable structure into method notes.",
       completed: false,
       dueDate: today,
       priority: "medium",
@@ -148,8 +305,8 @@ function createTasks(today: string): Task[] {
     },
     {
       id: "task_today_4",
-      title: "给下周课程做预习提纲",
-      description: "只写提纲，不求完整笔记。",
+      title: "Draft preview outline for next week classes",
+      description: "Outline only, no heavy detail.",
       completed: false,
       dueDate: today,
       priority: "low",
@@ -162,8 +319,8 @@ function createTasks(today: string): Task[] {
     },
     {
       id: "task_week_1",
-      title: "周末完成一次英语模考",
-      description: "按正式考试流程计时。",
+      title: "Complete one full CET-6 mock test",
+      description: "Follow real exam time constraints.",
       completed: false,
       dueDate: toDateKey(addDays(todayDate, 5)),
       priority: "high",
@@ -177,8 +334,8 @@ function createTasks(today: string): Task[] {
     },
     {
       id: "task_week_2",
-      title: "完成图算法专题复盘",
-      description: "归纳 3 个易错点。",
+      title: "Finish graph algorithm topic review",
+      description: "Summarize three repeat mistakes.",
       completed: false,
       dueDate: toDateKey(addDays(todayDate, 4)),
       priority: "medium",
@@ -195,16 +352,16 @@ function createTasks(today: string): Task[] {
 
 function createKnowledgeCategories(today: string): KnowledgeCategory[] {
   return [
-    { id: "cat_note", name: "课程笔记", order: 1, isSystem: true, createdAt: today, updatedAt: today },
-    { id: "cat_method", name: "方法库", order: 2, isSystem: true, createdAt: today, updatedAt: today },
-    { id: "cat_mistake", name: "错题整理", order: 3, isSystem: true, createdAt: today, updatedAt: today },
-    { id: "cat_link", name: "链接收藏", order: 4, isSystem: true, createdAt: today, updatedAt: today },
-    { id: "cat_pdf", name: "PDF 摘要", order: 5, isSystem: true, createdAt: today, updatedAt: today },
-    { id: "cat_summary", name: "总结沉淀", order: 6, isSystem: true, createdAt: today, updatedAt: today },
-    { id: "cat_exam", name: "考前冲刺", order: 7, isSystem: false, createdAt: today, updatedAt: today },
+    { id: "cat_note", name: "Course Notes", order: 1, isSystem: true, createdAt: today, updatedAt: today },
+    { id: "cat_method", name: "Method Library", order: 2, isSystem: true, createdAt: today, updatedAt: today },
+    { id: "cat_mistake", name: "Mistakes", order: 3, isSystem: true, createdAt: today, updatedAt: today },
+    { id: "cat_link", name: "Links", order: 4, isSystem: true, createdAt: today, updatedAt: today },
+    { id: "cat_pdf", name: "PDF Summary", order: 5, isSystem: true, createdAt: today, updatedAt: today },
+    { id: "cat_summary", name: "Summary", order: 6, isSystem: true, createdAt: today, updatedAt: today },
+    { id: "cat_exam", name: "Exam Sprint", order: 7, isSystem: false, createdAt: today, updatedAt: today },
     {
       id: "cat_math_exam",
-      name: "高数冲刺",
+      name: "Calculus Sprint",
       parentId: "cat_exam",
       order: 1,
       isSystem: false,
@@ -216,9 +373,9 @@ function createKnowledgeCategories(today: string): KnowledgeCategory[] {
 
 function createKnowledgeSubjects(): KnowledgeSubject[] {
   return [
-    { id: "subj_math", name: "数学", description: "微积分、线代、概率统计", order: 1 },
-    { id: "subj_physics", name: "物理", description: "力学、电磁学、实验", order: 2 },
-    { id: "subj_english", name: "英语", description: "四六级与学术英语", order: 3 },
+    { id: "subj_math", name: "Math", description: "Calculus, Linear Algebra, Probability", order: 1 },
+    { id: "subj_physics", name: "Physics", description: "Mechanics and experiments", order: 2 },
+    { id: "subj_english", name: "English", description: "CET and academic reading", order: 3 },
   ];
 }
 
@@ -227,8 +384,8 @@ function createKnowledgeCourses(today: string): KnowledgeCourse[] {
     {
       id: "course_calc",
       subjectId: "subj_math",
-      name: "高等数学",
-      description: "主线：极限、导数、积分、级数。",
+      name: "Calculus",
+      description: "Limit, derivative, integral and series.",
       order: 1,
       status: "learning",
       createdAt: today,
@@ -237,8 +394,8 @@ function createKnowledgeCourses(today: string): KnowledgeCourse[] {
     {
       id: "course_physics1",
       subjectId: "subj_physics",
-      name: "大学物理 I",
-      description: "主线：质点运动学、牛顿定律、动量与能量。",
+      name: "University Physics I",
+      description: "Kinematics and Newtonian mechanics.",
       order: 1,
       status: "not_started",
       createdAt: today,
@@ -247,8 +404,8 @@ function createKnowledgeCourses(today: string): KnowledgeCourse[] {
     {
       id: "course_cet6",
       subjectId: "subj_english",
-      name: "英语六级",
-      description: "主线：阅读、听力、写作、翻译。",
+      name: "CET-6",
+      description: "Reading, listening, writing and translation.",
       order: 1,
       status: "learning",
       createdAt: today,
@@ -262,9 +419,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_calc_ch1",
       courseId: "course_calc",
-      title: "第1章 极限与连续",
+      title: "Chapter 1 Limit and Continuity",
       type: "chapter",
-      description: "建立极限定义、无穷小比较、连续性判断。",
+      description: "Build core understanding for limits and continuity.",
       order: 1,
       status: "learning",
       createdAt: today,
@@ -273,9 +430,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_calc_topic_integral",
       courseId: "course_calc",
-      title: "积分技巧专题",
+      title: "Integral Techniques Topic",
       type: "topic",
-      description: "换元、分部积分与参数积分技巧归纳。",
+      description: "Substitution, by-parts and parameter integration.",
       order: 2,
       status: "review_pending",
       createdAt: today,
@@ -284,9 +441,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_calc_summary_mid",
       courseId: "course_calc",
-      title: "期中复习总结",
+      title: "Midterm Summary",
       type: "summary",
-      description: "按题型整理可复用步骤和坑点。",
+      description: "One-page recap by question type.",
       order: 3,
       status: "not_started",
       createdAt: today,
@@ -295,9 +452,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_phy_ch1",
       courseId: "course_physics1",
-      title: "第1章 质点运动学",
+      title: "Chapter 1 Particle Kinematics",
       type: "chapter",
-      description: "位移、速度、加速度和抛体运动。",
+      description: "Displacement, velocity and acceleration patterns.",
       order: 1,
       status: "not_started",
       createdAt: today,
@@ -306,9 +463,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_phy_topic_lab",
       courseId: "course_physics1",
-      title: "MATLAB 实验报告专题",
+      title: "MATLAB Lab Topic",
       type: "topic",
-      description: "数据可视化和实验误差分析模板。",
+      description: "Report structure and visualization templates.",
       order: 2,
       status: "learning",
       createdAt: today,
@@ -317,9 +474,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_phy_summary_final",
       courseId: "course_physics1",
-      title: "考前总复盘",
+      title: "Final Review Summary",
       type: "summary",
-      description: "按知识模块进行闭环复习。",
+      description: "Last-week recap for exam prep.",
       order: 3,
       status: "not_started",
       createdAt: today,
@@ -328,9 +485,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_en_topic_read",
       courseId: "course_cet6",
-      title: "阅读技巧专题",
+      title: "Reading Strategy Topic",
       type: "topic",
-      description: "定位法、段落主旨法和选项排除法。",
+      description: "Locate, infer and eliminate options quickly.",
       order: 1,
       status: "learning",
       createdAt: today,
@@ -339,9 +496,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_en_ch_listening",
       courseId: "course_cet6",
-      title: "听力高频场景",
+      title: "Listening Scenarios",
       type: "chapter",
-      description: "校园、求职、学术讲座高频词块。",
+      description: "Campus, interview and lecture contexts.",
       order: 2,
       status: "review_pending",
       createdAt: today,
@@ -350,9 +507,9 @@ function createKnowledgeNodes(today: string): KnowledgeNode[] {
     {
       id: "node_en_summary_exam",
       courseId: "course_cet6",
-      title: "考前冲刺总结",
+      title: "Exam Sprint Summary",
       type: "summary",
-      description: "四类题型最后一周策略。",
+      description: "Final week checklist by question type.",
       order: 3,
       status: "not_started",
       createdAt: today,
@@ -365,17 +522,17 @@ function createPdfDocuments(today: string): PdfKnowledgeDocument[] {
   return [
     {
       id: "pdf_calc_lecture",
-      title: "高数第1章讲义摘要",
+      title: "Calculus Chapter 1 Lecture Summary",
       fileName: "calc-limit-lecture.pdf",
       fileSizeKb: 2280,
       subjectId: "subj_math",
       courseId: "course_calc",
       nodeId: "node_calc_ch1",
-      summary: "讲义重点覆盖极限四则运算、重要极限、夹逼准则和连续函数性质。",
-      keywords: ["极限", "连续", "夹逼准则", "洛必达"],
+      summary: "Covers limit operations, core limit forms and continuity checks.",
+      keywords: ["limit", "continuity", "squeeze", "lhopital"],
       highlights: [
-        "先判断函数是否有界，再选择夹逼或等价替换。",
-        "分段函数连续性题优先检查连接点左右极限。",
+        "Check boundedness before selecting squeeze strategy.",
+        "For piecewise functions, compare left and right limit first.",
       ],
       createdAt: today,
       updatedAt: today,
@@ -383,17 +540,17 @@ function createPdfDocuments(today: string): PdfKnowledgeDocument[] {
     },
     {
       id: "pdf_phy_sheet",
-      title: "质点运动习题讲义摘要",
+      title: "Kinematics Exercise Sheet Summary",
       fileName: "physics-kinematics-sheet.pdf",
       fileSizeKb: 1560,
       subjectId: "subj_physics",
       courseId: "course_physics1",
       nodeId: "node_phy_ch1",
-      summary: "讲义整理了匀变速直线和抛体运动题型，强调受力分析与方程选择。",
-      keywords: ["匀加速", "抛体", "位移方程", "受力分析"],
+      summary: "Focuses on uniform acceleration and projectile setup patterns.",
+      keywords: ["kinematics", "projectile", "equation", "force"],
       highlights: [
-        "先画运动示意图，再设坐标系。",
-        "拆分水平和竖直方向方程可减少错误。",
+        "Draw motion sketch before writing equations.",
+        "Split horizontal and vertical equations to reduce mistakes.",
       ],
       createdAt: today,
       updatedAt: today,
@@ -405,9 +562,9 @@ function createQuickNotes(today: string): QuickNote[] {
   return [
     {
       id: "qn_calc_1",
-      title: "极限题速记",
-      content: "遇到 x→0 的三角函数极限，先尝试等价替换和泰勒前两项。",
-      tags: ["高数", "极限"],
+      title: "Limit quick check",
+      content: "For x->0 trigonometric limits, try equivalent transform before expansion.",
+      tags: ["calculus", "limit"],
       categoryId: "cat_math_exam",
       subjectId: "subj_math",
       courseId: "course_calc",
@@ -418,9 +575,9 @@ function createQuickNotes(today: string): QuickNote[] {
     },
     {
       id: "qn_phy_1",
-      title: "抛体运动误区",
-      content: "总时间不要直接套公式，先看竖直方向回到同一高度还是不同高度。",
-      tags: ["物理", "抛体", "错题"],
+      title: "Projectile pitfall",
+      content: "Do not force one formula for total time, check landing height condition first.",
+      tags: ["physics", "projectile", "mistake"],
       categoryId: "cat_mistake",
       subjectId: "subj_physics",
       courseId: "course_physics1",
@@ -437,10 +594,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
   return [
     {
       id: "k_calc_limit_note",
-      title: "极限定义与常见判别",
+      title: "Limit definition and common methods",
       type: "note",
-      tags: ["高数", "极限"],
-      content: "先判断趋近点，再选方法：代入/因式分解/有理化/等价替换。",
+      tags: ["calculus", "limit"],
+      content: "Method order: substitution, factorization, rationalization, equivalent transform.",
       categoryId: "cat_note",
       subjectId: "subj_math",
       courseId: "course_calc",
@@ -451,10 +608,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_cet6_read_method",
-      title: "六级阅读定位法模板",
+      title: "CET-6 reading locate strategy",
       type: "method",
-      tags: ["英语", "阅读", "技巧"],
-      content: "题干关键词定位 -> 段落主旨 -> 选项排除。限时 18 分钟。",
+      tags: ["english", "reading", "strategy"],
+      content: "Locate keyword -> identify paragraph intent -> eliminate options quickly.",
       categoryId: "cat_method",
       subjectId: "subj_english",
       courseId: "course_cet6",
@@ -465,10 +622,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_algo_graph_mistake",
-      title: "图遍历错题归纳",
+      title: "Graph traversal mistakes",
       type: "mistake",
-      tags: ["算法", "BFS", "DFS"],
-      content: "visited 初始化时机错误会导致重复计数；先入队再标记。",
+      tags: ["algorithm", "bfs", "dfs"],
+      content: "Visited timing is critical. Mark consistently when enqueueing.",
       categoryId: "cat_mistake",
       relatedTaskIds: ["task_today_2", "task_week_2"],
       createdAt: today,
@@ -476,9 +633,9 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_math_link",
-      title: "积分技巧可视化链接",
+      title: "Integration visual guide",
       type: "link",
-      tags: ["数学", "积分", "可视化"],
+      tags: ["math", "integration", "visual"],
       content: "https://example.com/integration-visual-guide",
       categoryId: "cat_link",
       subjectId: "subj_math",
@@ -490,10 +647,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_pdf_calc_summary",
-      title: "高数第1章 PDF 摘要",
+      title: "Calculus chapter 1 PDF summary",
       type: "pdf_summary",
-      tags: ["PDF", "高数", "极限"],
-      content: "讲义重点：极限四则、重要极限、夹逼准则、分段函数连续。",
+      tags: ["pdf", "calculus", "limit"],
+      content: "Core points: limit operations, classic forms, squeeze theorem and continuity check.",
       categoryId: "cat_pdf",
       subjectId: "subj_math",
       courseId: "course_calc",
@@ -505,10 +662,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_cet6_topic_summary",
-      title: "六级阅读专题总结",
+      title: "CET-6 reading topic summary",
       type: "topic_summary",
-      tags: ["六级", "专题总结"],
-      content: "本专题只保留 3 个稳定动作：定位、主旨、排除，避免反复换策略。",
+      tags: ["cet6", "topic-summary"],
+      content: "Keep only three stable moves: locate, infer, eliminate.",
       categoryId: "cat_summary",
       subjectId: "subj_english",
       courseId: "course_cet6",
@@ -519,10 +676,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_phy_chapter_summary",
-      title: "质点运动学章节总结",
+      title: "Kinematics chapter summary",
       type: "chapter_summary",
-      tags: ["物理", "章节总结"],
-      content: "每道题都先写已知与待求，再判断用运动学方程还是受力分析。",
+      tags: ["physics", "chapter-summary"],
+      content: "Write known/unknown first, then select kinematics or force-analysis path.",
       categoryId: "cat_summary",
       subjectId: "subj_physics",
       courseId: "course_physics1",
@@ -533,10 +690,10 @@ function createKnowledge(today: string): KnowledgeItem[] {
     },
     {
       id: "k_quick_phy_import",
-      title: "抛体运动误区（由速记导入）",
+      title: "Projectile pitfall (imported from quick note)",
       type: "quick_note_import",
-      tags: ["速记导入", "物理"],
-      content: "总时间不要先套公式，先判断回落高度。",
+      tags: ["quick-note", "physics"],
+      content: "Do not lock into one formula before checking landing condition.",
       categoryId: "cat_mistake",
       subjectId: "subj_physics",
       courseId: "course_physics1",
@@ -553,7 +710,7 @@ function createIdeas(today: string): Idea[] {
   return [
     {
       id: "idea_1",
-      content: "把英语作文模板做成 Anki 卡片，碎片时间复习。",
+      content: "Turn writing templates into flashcards for commuting review.",
       category: "study_inspiration",
       status: "unprocessed",
       createdAt: today,
@@ -561,7 +718,7 @@ function createIdeas(today: string): Idea[] {
     },
     {
       id: "idea_2",
-      content: "周三晚自习容易分神，试试 25+5 专注节奏。",
+      content: "Try 25+5 cadence for Wednesday evening study block.",
       category: "review_thought",
       status: "unprocessed",
       createdAt: today,
@@ -569,7 +726,7 @@ function createIdeas(today: string): Idea[] {
     },
     {
       id: "idea_3",
-      content: "做一个寝室共享的作息打卡表。",
+      content: "Build a shared dorm routine tracker.",
       category: "project_idea",
       status: "archived",
       createdAt: today,
@@ -585,11 +742,11 @@ function createWeeklyPlan(today: string): WeeklyPlan {
     weekStartDate: toDateKey(monday),
     weekGoalIds: ["goal_english_6", "goal_algo_final"],
     executionLog: [
-      `周一已完成：${formatDateLabel(today)} 的三件事中 2 件。`,
-      "周二晚间复盘：图算法题目耗时过长，已补充模板。",
+      `Monday update: completed 2 out of 3 key tasks on ${formatDateLabel(today)}.`,
+      "Tuesday review: graph algorithm tasks overran expected time.",
     ],
-    checkSummary: "本周开始执行更稳定，但晚上学习容易拖延到 23:30 后。",
-    nextWeekOneImprovement: "下周只改一个问题：22:45 前结束学习并开始复盘。",
+    checkSummary: "Execution is more stable, but evening shutdown happens too late.",
+    nextWeekOneImprovement: "One fix only: stop active study by 22:45 and start review.",
     updatedAt: today,
   };
 }
@@ -600,18 +757,20 @@ function createReviews(today: string) {
     {
       id: "review_1",
       date: toDateKey(addDays(todayDate, -1)),
-      wins: "完成了英语听力 2 套并整理了错题。",
-      wastedTime: "刷短视频超出计划 35 分钟。",
-      improveOneThing: "学习前先把手机放到书柜顶层。",
+      wins: "Finished two listening sets and consolidated mistakes.",
+      wastedTime: "Short-video scrolling exceeded plan by 35 minutes.",
+      improveOneThing: "Place phone on top shelf before study starts.",
       createdAt: today,
+      updatedAt: today,
     },
     {
       id: "review_2",
       date: toDateKey(addDays(todayDate, -2)),
-      wins: "数据结构图论章节复盘完毕。",
-      wastedTime: "下午自习前准备时间过长。",
-      improveOneThing: "自习开始前 3 分钟只做清单确认。",
+      wins: "Completed graph theory chapter recap.",
+      wastedTime: "Spent too long preparing before study session.",
+      improveOneThing: "Use 3-minute pre-study checklist only.",
       createdAt: today,
+      updatedAt: today,
     },
   ];
 }
@@ -623,7 +782,6 @@ function createParsedImportTasks(): ParsedImportTask[] {
 export function createMockState(): AppState {
   const today = todayKey();
   const goals = createGoalTemplates(today);
-
   const sessions: GoalSession[] = goals.flatMap((goal) => generateGoalSessions(goal));
   const tasks = createTasks(today);
 
@@ -650,23 +808,23 @@ export function createMockState(): AppState {
     sessionIds: goalSessionMap.get(goal.id) ?? [],
   }));
 
+  const weatherLocations = createWeatherLocations(today);
+  const selectedWeatherLocationId = weatherLocations.find((location) => location.isDefault)?.id ?? weatherLocations[0].id;
+  const selectedCity = weatherLocations.find((location) => location.id === selectedWeatherLocationId)?.city ?? "Shanghai";
+
   return {
     user: {
       id: "user_demo",
-      name: "小林",
+      name: "Xiao Lin",
       role: "student",
-      gradeLabel: "大三 · 计算机科学",
+      gradeLabel: "Junior - Computer Science",
       timezone: "Asia/Shanghai",
     },
-    weather: {
-      date: today,
-      location: "上海",
-      condition: "多云",
-      temperatureC: 23,
-      humidity: 58,
-      suggestion: "适合 45 分钟学习冲刺，午后安排中等强度任务。",
-      outfitTip: "薄外套 + 透气上衣，晚间注意保暖。",
-    },
+    weather: getMockWeatherByCity(selectedCity, today),
+    weatherLocations,
+    selectedWeatherLocationId,
+    timelineItems: createTimelineItems(today),
+    newsItems: createNewsItems(today),
     goals: goalsWithRelations,
     goalSessions: sessions,
     weeklyPlans: [createWeeklyPlan(today)],
@@ -685,23 +843,23 @@ export function createMockState(): AppState {
 }
 
 export function createMockImportTasks(url: string): ParsedImportTask[] {
-  const host = url.replace(/^https?:\/\//, "").split("/")[0] || "外部网页";
+  const host = url.replace(/^https?:\/\//, "").split("/")[0] || "external source";
   return [
     {
       id: createId("import_task"),
-      title: `阅读 ${host} 文章并提炼 3 条要点`,
+      title: `Read one article from ${host} and extract 3 insights`,
       sourceUrl: url,
       selected: true,
     },
     {
       id: createId("import_task"),
-      title: `将 ${host} 的案例整理到方法库`,
+      title: `Convert one ${host} idea into method notes`,
       sourceUrl: url,
       selected: true,
     },
     {
       id: createId("import_task"),
-      title: `为 ${host} 相关主题创建 1 个复习任务`,
+      title: `Create one review task based on ${host}`,
       sourceUrl: url,
       selected: false,
     },
@@ -714,12 +872,12 @@ export function createMockPdfSummary(fileName: string): {
   highlights: string[];
 } {
   return {
-    summary: `已基于 ${fileName} 生成 mock 摘要：文档核心围绕概念定义、典型例题和复习策略。`,
-    keywords: ["核心概念", "高频题型", "复习策略", "错题回看"],
+    summary: `Mock summary for ${fileName}: core concepts, representative examples and review strategy extracted.`,
+    keywords: ["core concept", "high-frequency pattern", "review strategy", "mistake recap"],
     highlights: [
-      "先建立知识框架，再补充细节例题。",
-      "优先把错题归入可复用模板。",
-      "考前按章节做一页总结。",
+      "Build concept map first, then attach example patterns.",
+      "Convert repeat mistakes into checklist form.",
+      "Generate one-page summary before exam week.",
     ],
   };
 }

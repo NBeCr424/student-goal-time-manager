@@ -3,7 +3,7 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { addDays, fromDateKey, todayKey, toDateKey } from "@/lib/date";
 import { createId } from "@/lib/id";
-import { createMockImportTasks, createMockPdfSummary, createMockState } from "@/lib/mock-data";
+import { createMockImportTasks, createMockPdfSummary, createMockState, getMockWeatherByCity } from "@/lib/mock-data";
 import { generateGoalSessions } from "@/lib/scheduler";
 import { loadState, saveState } from "@/lib/storage";
 import {
@@ -17,10 +17,18 @@ import {
   PdfUploadInput,
   QuickNoteInput,
   Task,
+  TimelineItem,
   TaskPlanType,
+  WeatherLocation,
 } from "@/lib/types";
 
 interface AppActions {
+  addWeatherLocation: (city: string) => void;
+  selectWeatherLocation: (locationId: string) => void;
+  setDefaultWeatherLocation: (locationId: string) => void;
+  addManualTimelineItem: (title: string, startTime: string, endTime?: string) => void;
+  removeManualTimelineItem: (itemId: string) => void;
+
   toggleTask: (taskId: string) => void;
   reorderTask: (taskId: string, direction: "up" | "down") => void;
   addTask: (title: string, planType: TaskPlanType) => void;
@@ -70,6 +78,60 @@ function nowDate() {
   return todayKey();
 }
 
+function normalizeReviewEntries(entries: AppState["reviews"], fallbackDate: string): AppState["reviews"] {
+  return entries.map((entry) => ({
+    ...entry,
+    updatedAt: entry.updatedAt ?? entry.createdAt ?? fallbackDate,
+    createdAt: entry.createdAt ?? fallbackDate,
+  }));
+}
+
+function normalizeWeatherLocations(locations: WeatherLocation[] | undefined, fallbackDate: string): WeatherLocation[] {
+  if (!locations || locations.length === 0) {
+    return [];
+  }
+
+  return locations.map((location) => ({
+    ...location,
+    label: location.label || location.city,
+    createdAt: location.createdAt || fallbackDate,
+    updatedAt: location.updatedAt || fallbackDate,
+  }));
+}
+
+function normalizeTimelineItems(items: AppState["timelineItems"] | undefined, fallbackDate: string): AppState["timelineItems"] {
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  return items.map((item) => ({
+    ...item,
+    status: item.status ?? "planned",
+    createdAt: item.createdAt ?? fallbackDate,
+    updatedAt: item.updatedAt ?? item.createdAt ?? fallbackDate,
+  }));
+}
+
+function ensureWeatherSelection(state: AppState): AppState {
+  const locations = state.weatherLocations.length > 0 ? state.weatherLocations : createMockState().weatherLocations;
+  const selected =
+    locations.find((location) => location.id === state.selectedWeatherLocationId) ??
+    locations.find((location) => location.isDefault) ??
+    locations[0];
+
+  const normalizedLocations = locations.map((location) => ({
+    ...location,
+    isDefault: location.id === selected.id,
+  }));
+
+  return {
+    ...state,
+    weatherLocations: normalizedLocations,
+    selectedWeatherLocationId: selected.id,
+    weather: getMockWeatherByCity(selected.city, todayKey()),
+  };
+}
+
 function migrateLegacyKnowledgeItems(loaded: AppState, base: AppState): KnowledgeItem[] {
   const categoryIdByLegacy: Record<string, string> = {
     course_notes: "cat_note",
@@ -114,9 +176,16 @@ function normalizeLoadedState(loaded: AppState | null): AppState {
     return base;
   }
 
-  return {
+  const loadedWeatherLocations = normalizeWeatherLocations(loaded.weatherLocations, todayKey());
+  const loadedTimelineItems = normalizeTimelineItems(loaded.timelineItems, todayKey());
+
+  const merged: AppState = {
     ...base,
     ...loaded,
+    weatherLocations: loadedWeatherLocations.length > 0 ? loadedWeatherLocations : base.weatherLocations,
+    selectedWeatherLocationId: loaded.selectedWeatherLocationId ?? base.selectedWeatherLocationId,
+    timelineItems: loaded.timelineItems ? loadedTimelineItems : base.timelineItems,
+    newsItems: loaded.newsItems ?? base.newsItems,
     goals: loaded.goals ?? base.goals,
     goalSessions: loaded.goalSessions ?? base.goalSessions,
     weeklyPlans: loaded.weeklyPlans ?? base.weeklyPlans,
@@ -129,9 +198,11 @@ function normalizeLoadedState(loaded: AppState | null): AppState {
     quickNotes: loaded.quickNotes ?? base.quickNotes,
     pdfDocuments: loaded.pdfDocuments ?? base.pdfDocuments,
     ideas: loaded.ideas ?? base.ideas,
-    reviews: loaded.reviews ?? base.reviews,
+    reviews: normalizeReviewEntries(loaded.reviews ?? base.reviews, todayKey()),
     parsedImportTasks: loaded.parsedImportTasks ?? base.parsedImportTasks,
   };
+
+  return ensureWeatherSelection(merged);
 }
 
 function findCurrentWeeklyPlanIndex(state: AppState): number {
@@ -173,6 +244,112 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const actions = useMemo<AppActions>(
     () => ({
+      addWeatherLocation(city) {
+        const clean = city.trim();
+        if (!clean) {
+          return;
+        }
+
+        setState((prev) => {
+          const existing = prev.weatherLocations.find(
+            (location) => location.city.toLowerCase() === clean.toLowerCase(),
+          );
+
+          if (existing) {
+            return {
+              ...prev,
+              selectedWeatherLocationId: existing.id,
+              weather: getMockWeatherByCity(existing.city, todayKey()),
+            };
+          }
+
+          const newLocation: WeatherLocation = {
+            id: createId("weather"),
+            city: clean,
+            label: clean,
+            isDefault: false,
+            createdAt: nowDate(),
+            updatedAt: nowDate(),
+          };
+
+          return {
+            ...prev,
+            weatherLocations: [...prev.weatherLocations, newLocation],
+            selectedWeatherLocationId: newLocation.id,
+            weather: getMockWeatherByCity(newLocation.city, todayKey()),
+          };
+        });
+      },
+
+      selectWeatherLocation(locationId) {
+        setState((prev) => {
+          const location = prev.weatherLocations.find((item) => item.id === locationId);
+          if (!location) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            selectedWeatherLocationId: location.id,
+            weather: getMockWeatherByCity(location.city, todayKey()),
+          };
+        });
+      },
+
+      setDefaultWeatherLocation(locationId) {
+        setState((prev) => {
+          const target = prev.weatherLocations.find((item) => item.id === locationId);
+          if (!target) {
+            return prev;
+          }
+
+          const weatherLocations = prev.weatherLocations.map((location) => ({
+            ...location,
+            isDefault: location.id === locationId,
+            updatedAt: nowDate(),
+          }));
+
+          return {
+            ...prev,
+            weatherLocations,
+            selectedWeatherLocationId: locationId,
+            weather: getMockWeatherByCity(target.city, todayKey()),
+          };
+        });
+      },
+
+      addManualTimelineItem(title, startTime, endTime) {
+        const cleanTitle = title.trim();
+        if (!cleanTitle || !startTime.trim()) {
+          return;
+        }
+
+        setState((prev) => ({
+          ...prev,
+          timelineItems: [
+            ...prev.timelineItems,
+            {
+              id: createId("timeline"),
+              type: "manual_schedule",
+              title: cleanTitle,
+              date: todayKey(),
+              startTime,
+              endTime: endTime?.trim() || undefined,
+              status: "planned",
+              createdAt: nowDate(),
+              updatedAt: nowDate(),
+            } as TimelineItem,
+          ],
+        }));
+      },
+
+      removeManualTimelineItem(itemId) {
+        setState((prev) => ({
+          ...prev,
+          timelineItems: prev.timelineItems.filter((item) => item.id !== itemId),
+        }));
+      },
+
       toggleTask(taskId) {
         setState((prev) => ({
           ...prev,
@@ -558,17 +735,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
       addReview(wins, wastedTime, improveOneThing) {
         const date = todayKey();
-        const review = {
-          id: createId("review"),
-          date,
-          wins: wins.trim(),
-          wastedTime: wastedTime.trim(),
-          improveOneThing: improveOneThing.trim(),
-          createdAt: date,
-        };
 
         setState((prev) => {
           const exists = prev.reviews.find((entry) => entry.date === date);
+          const review = {
+            id: exists?.id ?? createId("review"),
+            date,
+            wins: wins.trim(),
+            wastedTime: wastedTime.trim(),
+            improveOneThing: improveOneThing.trim(),
+            createdAt: exists?.createdAt ?? date,
+            updatedAt: nowDate(),
+          };
 
           if (!exists) {
             return {
@@ -1028,3 +1206,4 @@ export function useAppStore() {
 
   return context;
 }
+

@@ -210,6 +210,41 @@ export interface WeatherInfo {
   outfitTip: string;
 }
 
+export interface WeatherLocation {
+  id: string;
+  city: string;
+  label: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TimelineItemType = "goal_session" | "task" | "manual_schedule" | "review_reminder";
+export type TimelineItemStatus = "planned" | "done";
+
+export interface TimelineItem {
+  id: string;
+  type: TimelineItemType;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime?: string;
+  sourceGoalId?: string;
+  sourceTaskId?: string;
+  status: TimelineItemStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  publishedAt: string;
+}
+
 export interface ReviewEntry {
   id: string;
   date: string;
@@ -217,6 +252,7 @@ export interface ReviewEntry {
   wastedTime: string;
   improveOneThing: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CalendarDaySummary {
@@ -238,6 +274,10 @@ export interface ParsedImportTask {
 export interface AppState {
   user: User;
   weather: WeatherInfo;
+  weatherLocations: WeatherLocation[];
+  selectedWeatherLocationId: string;
+  timelineItems: TimelineItem[];
+  newsItems: NewsItem[];
   goals: Goal[];
   goalSessions: GoalSession[];
   weeklyPlans: WeeklyPlan[];
