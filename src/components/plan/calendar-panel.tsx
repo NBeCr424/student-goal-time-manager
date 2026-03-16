@@ -69,6 +69,14 @@ export function CalendarPanel() {
     [selectedDate, state.goalSessions],
   );
 
+  const dayTasks = useMemo(
+    () =>
+      state.tasks
+        .filter((task) => task.dueDate === selectedDate)
+        .sort((a, b) => `${a.startTime ?? "99:99"} ${a.order}`.localeCompare(`${b.startTime ?? "99:99"} ${b.order}`)),
+    [selectedDate, state.tasks],
+  );
+
   const goalsById = useMemo(() => new Map(state.goals.map((goal) => [goal.id, goal])), [state.goals]);
 
   return (
@@ -166,6 +174,9 @@ export function CalendarPanel() {
               .filter((session) => session.date === date)
               .sort((a, b) => a.startTime.localeCompare(b.startTime));
             const tasks = state.tasks.filter((task) => task.dueDate === date);
+            const scheduledTasks = tasks
+              .filter((task) => task.isScheduled && task.startTime && task.endTime)
+              .sort((a, b) => `${a.startTime} ${a.order}`.localeCompare(`${b.startTime} ${b.order}`));
 
             return (
               <article key={date} className="card-surface p-3">
@@ -178,6 +189,17 @@ export function CalendarPanel() {
                     <div key={session.id} className={`rounded-lg p-2 text-xs text-ink ${sessionColor(index)}`}>
                       <p className="font-medium">{session.startTime} {session.title}</p>
                       <p className="text-[11px] text-ink/70">目标：{goalsById.get(session.goalId)?.title}</p>
+                    </div>
+                  ))}
+                  {scheduledTasks.map((task) => (
+                    <div key={task.id} className="rounded-lg border border-ink/10 bg-white p-2 text-xs text-ink">
+                      <p className="font-medium">
+                        {task.startTime} {task.title}
+                      </p>
+                      <p className="text-[11px] text-ink/65">
+                        {task.endTime ? `${task.startTime} - ${task.endTime}` : "已安排"} ·
+                        {task.syncedToCalendar ? " 已同步日历" : " 未同步日历"}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -201,9 +223,21 @@ export function CalendarPanel() {
               </p>
             </li>
           ))}
+          {dayTasks.map((task) => (
+            <li key={task.id} className="rounded-xl border border-ink/10 bg-white p-3 text-sm">
+              <p className="font-medium text-ink">{task.title}</p>
+              <p className="text-xs text-ink/60">
+                {task.isScheduled && task.startTime && task.endTime
+                  ? `${task.startTime} - ${task.endTime}`
+                  : "未设定具体时间"} · {task.planType}
+              </p>
+            </li>
+          ))}
         </ul>
 
-        {daySessions.length === 0 && <p className="mt-2 text-sm text-ink/60">该日暂无目标 session，可在目标详情页一键生成。</p>}
+        {daySessions.length === 0 && dayTasks.length === 0 && (
+          <p className="mt-2 text-sm text-ink/60">该日暂无安排，可在今日任务页或目标详情页补充。</p>
+        )}
       </section>
     </div>
   );

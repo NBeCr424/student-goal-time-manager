@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarPanel } from "@/components/plan/calendar-panel";
@@ -7,18 +7,18 @@ import { ImportPanel } from "@/components/plan/import-panel";
 import { TodayPanel } from "@/components/plan/today-panel";
 import { WeeklyPanel } from "@/components/plan/weekly-panel";
 
-type PlanTab = "goals" | "weekly" | "today" | "calendar" | "import";
+type PlanTab = "today" | "weekly" | "goals" | "calendar" | "import";
 
-const tabs: Array<{ id: PlanTab; label: string }> = [
-  { id: "goals", label: "长期目标" },
-  { id: "weekly", label: "本周计划" },
-  { id: "today", label: "今日任务" },
-  { id: "calendar", label: "日历" },
-  { id: "import", label: "导入任务" },
+const tabs: Array<{ id: PlanTab; label: string; hint: string }> = [
+  { id: "today", label: "今日任务", hint: "先排今天" },
+  { id: "weekly", label: "本周任务", hint: "再看本周" },
+  { id: "goals", label: "长期目标", hint: "最后看长期" },
+  { id: "calendar", label: "日历", hint: "全局视角" },
+  { id: "import", label: "导入任务", hint: "外部输入" },
 ];
 
 export function PlanPage() {
-  const [activeTab, setActiveTab] = useState<PlanTab>("goals");
+  const [activeTab, setActiveTab] = useState<PlanTab>("today");
 
   useEffect(() => {
     const queryTab = new URLSearchParams(window.location.search).get("tab") as PlanTab | null;
@@ -28,14 +28,14 @@ export function PlanPage() {
   }, []);
 
   const tabContent = useMemo(() => {
-    if (activeTab === "goals") {
-      return <GoalsPanel />;
+    if (activeTab === "today") {
+      return <TodayPanel />;
     }
     if (activeTab === "weekly") {
       return <WeeklyPanel />;
     }
-    if (activeTab === "today") {
-      return <TodayPanel />;
+    if (activeTab === "goals") {
+      return <GoalsPanel />;
     }
     if (activeTab === "calendar") {
       return <CalendarPanel />;
@@ -56,7 +56,8 @@ export function PlanPage() {
                 activeTab === tab.id ? "bg-ink text-white" : "bg-white text-ink/70"
               }`}
             >
-              {tab.label}
+              <span>{tab.label}</span>
+              <span className="ml-1 text-[11px] opacity-75">{tab.hint}</span>
             </button>
           ))}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
-import { addDays, fromDateKey, todayKey, toDateKey } from "@/lib/date";
+import { addDays, addMinutes, fromDateKey, todayKey, toDateKey } from "@/lib/date";
 import { createId } from "@/lib/id";
 import { createMockImportTasks, createMockPdfSummary, createMockState, getMockWeatherByCity } from "@/lib/mock-data";
 import { generateGoalSessions } from "@/lib/scheduler";
@@ -31,7 +31,15 @@ interface AppActions {
 
   toggleTask: (taskId: string) => void;
   reorderTask: (taskId: string, direction: "up" | "down") => void;
-  addTask: (title: string, planType: TaskPlanType) => void;
+  addTask: (
+    title: string,
+    planType: TaskPlanType,
+    schedule?: { startTime?: string; endTime?: string; durationMinutes?: number },
+  ) => void;
+  setTaskSchedule: (taskId: string, startTime: string, endTime?: string, durationMinutes?: number) => void;
+  clearTaskSchedule: (taskId: string) => void;
+  markTasksSyncedToCalendar: (taskIds: string[], synced: boolean) => void;
+  markGoalSessionsSyncedToCalendar: (sessionIds: string[], synced: boolean) => void;
   addGoal: (input: NewGoalInput) => void;
   regenerateGoalSessions: (goalId: string) => void;
   parseImportUrl: (url: string) => void;
@@ -76,6 +84,69 @@ const AppStoreContext = createContext<AppStoreContextValue | null>(null);
 
 function nowDate() {
   return todayKey();
+}
+
+function toMinuteOfDay(time: string): number {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function durationBetween(startTime: string, endTime: string): number {
+  return Math.max(15, toMinuteOfDay(endTime) - toMinuteOfDay(startTime));
+}
+
+function normalizeGoalSessions(entries: AppState["goalSessions"] | undefined): AppState["goalSessions"] {
+  if (!entries || entries.length === 0) {
+    return [];
+  }
+
+  return entries.map((session) => ({
+    ...session,
+    syncedToCalendar: session.syncedToCalendar ?? false,
+  }));
+}
+
+function normalizeTasks(entries: AppState["tasks"] | undefined, fallbackDate: string): AppState["tasks"] {
+  if (!entries || entries.length === 0) {
+    return [];
+  }
+
+  return entries.map((task) => {
+    const createdAt = task.createdAt ?? fallbackDate;
+    const updatedAt = task.updatedAt ?? createdAt;
+    const hasStart = Boolean(task.startTime);
+    const hasEnd = Boolean(task.endTime);
+    const inferredDuration =
+      task.durationMinutes ??
+      (task.startTime && task.endTime ? durationBetween(task.startTime, task.endTime) : undefined) ??
+      60;
+    const isScheduled = task.isScheduled ?? (hasStart && hasEnd);
+    const syncedToCalendar = task.syncedToCalendar ?? false;
+
+    if (!isScheduled) {
+      return {
+        ...task,
+        createdAt,
+        updatedAt,
+        isScheduled: false,
+        syncedToCalendar,
+      };
+    }
+
+    const safeStart = task.startTime ?? "19:00";
+    const safeEnd = task.endTime ?? addMinutes(safeStart, inferredDuration);
+
+    return {
+      ...task,
+      createdAt,
+      updatedAt,
+      startTime: safeStart,
+      endTime: safeEnd,
+      durationMinutes: inferredDuration,
+      isScheduled: true,
+      syncedToCalendar,
+    };
+  });
 }
 
 function normalizeReviewEntries(entries: AppState["reviews"], fallbackDate: string): AppState["reviews"] {
@@ -178,6 +249,8 @@ function normalizeLoadedState(loaded: AppState | null): AppState {
 
   const loadedWeatherLocations = normalizeWeatherLocations(loaded.weatherLocations, todayKey());
   const loadedTimelineItems = normalizeTimelineItems(loaded.timelineItems, todayKey());
+  const normalizedTasks = normalizeTasks(loaded.tasks ?? base.tasks, todayKey());
+  const normalizedGoalSessions = normalizeGoalSessions(loaded.goalSessions ?? base.goalSessions);
 
   const merged: AppState = {
     ...base,
@@ -187,9 +260,9 @@ function normalizeLoadedState(loaded: AppState | null): AppState {
     timelineItems: loaded.timelineItems ? loadedTimelineItems : base.timelineItems,
     newsItems: loaded.newsItems ?? base.newsItems,
     goals: loaded.goals ?? base.goals,
-    goalSessions: loaded.goalSessions ?? base.goalSessions,
+    goalSessions: normalizedGoalSessions,
     weeklyPlans: loaded.weeklyPlans ?? base.weeklyPlans,
-    tasks: loaded.tasks ?? base.tasks,
+    tasks: normalizedTasks,
     knowledgeItems: migrateLegacyKnowledgeItems(loaded, base),
     knowledgeCategories: loaded.knowledgeCategories ?? base.knowledgeCategories,
     knowledgeSubjects: loaded.knowledgeSubjects ?? base.knowledgeSubjects,
@@ -350,6 +423,91 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         }));
       },
 
+      setTaskSchedule(taskId, startTime, endTime, durationMinutes) {
+        const cleanStart = startTime.trim();
+        if (!cleanStart) {
+          return;
+        }
+
+        setState((prev) => ({
+          ...prev,
+          tasks: prev.tasks.map((task) => {
+            if (task.id !== taskId) {
+              return task;
+            }
+
+            const safeDuration = durationMinutes ?? task.durationMinutes ?? 60;
+            const safeEnd = endTime?.trim() || addMinutes(cleanStart, safeDuration);
+
+            return {
+              ...task,
+              startTime: cleanStart,
+              endTime: safeEnd,
+              durationMinutes: safeDuration,
+              isScheduled: true,
+              syncedToCalendar: false,
+              updatedAt: nowDate(),
+            };
+          }),
+        }));
+      },
+
+      clearTaskSchedule(taskId) {
+        setState((prev) => ({
+          ...prev,
+          tasks: prev.tasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  startTime: undefined,
+                  endTime: undefined,
+                  durationMinutes: undefined,
+                  isScheduled: false,
+                  syncedToCalendar: false,
+                  updatedAt: nowDate(),
+                }
+              : task,
+          ),
+        }));
+      },
+
+      markTasksSyncedToCalendar(taskIds, synced) {
+        if (taskIds.length === 0) {
+          return;
+        }
+        const idSet = new Set(taskIds);
+        setState((prev) => ({
+          ...prev,
+          tasks: prev.tasks.map((task) =>
+            idSet.has(task.id)
+              ? {
+                  ...task,
+                  syncedToCalendar: synced,
+                  updatedAt: nowDate(),
+                }
+              : task,
+          ),
+        }));
+      },
+
+      markGoalSessionsSyncedToCalendar(sessionIds, synced) {
+        if (sessionIds.length === 0) {
+          return;
+        }
+        const idSet = new Set(sessionIds);
+        setState((prev) => ({
+          ...prev,
+          goalSessions: prev.goalSessions.map((session) =>
+            idSet.has(session.id)
+              ? {
+                  ...session,
+                  syncedToCalendar: synced,
+                }
+              : session,
+          ),
+        }));
+      },
+
       toggleTask(taskId) {
         setState((prev) => ({
           ...prev,
@@ -401,7 +559,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         });
       },
 
-      addTask(title, planType) {
+      addTask(title, planType, schedule) {
         const clean = title.trim();
         if (!clean) {
           return;
@@ -412,6 +570,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           const maxOrder = prev.tasks
             .filter((task) => task.planType === planType && task.dueDate === dueDate)
             .reduce((max, task) => Math.max(max, task.order), 0);
+          const startTime = schedule?.startTime?.trim() || undefined;
+          const duration = schedule?.durationMinutes ?? 60;
+          const endTime = schedule?.endTime?.trim() || (startTime ? addMinutes(startTime, duration) : undefined);
+          const isScheduled = Boolean(startTime && endTime);
 
           return {
             ...prev,
@@ -423,6 +585,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
                 description: "",
                 completed: false,
                 dueDate,
+                startTime,
+                endTime,
+                durationMinutes: isScheduled ? duration : undefined,
+                isScheduled,
+                syncedToCalendar: false,
                 priority: "medium",
                 planType,
                 order: maxOrder + 1,
@@ -541,9 +708,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           const newTasks = selected.map((item, index) => ({
             id: createId("task"),
             title: item.title,
-            description: `来源：${item.sourceUrl}`,
+            description: `source: ${item.sourceUrl}`,
             completed: false,
             dueDate,
+            isScheduled: false,
+            syncedToCalendar: false,
             priority: "medium" as const,
             planType,
             order: currentMax + index + 1,
@@ -670,6 +839,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
                 description: idea.content,
                 completed: false,
                 dueDate,
+                isScheduled: false,
+                syncedToCalendar: false,
                 priority: "medium",
                 planType,
                 order: maxOrder + 1,
@@ -706,7 +877,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
               id: knowledgeId,
               title: idea.content.slice(0, 24),
               type: "note" as const,
-              tags: ["来自想法"],
+              tags: ["from_idea"],
               content: idea.content,
               categoryId: categoryId ?? "cat_method",
               relatedTaskIds: [],
@@ -1123,7 +1294,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
               title: doc.title,
               type: "pdf_summary",
               tags: ["PDF", ...doc.keywords.slice(0, 3)],
-              content: `${doc.summary}\n\n重点：\n${doc.highlights.map((line, index) => `${index + 1}. ${line}`).join("\n")}`,
+              content: `${doc.summary}\n\nHighlights:\n${doc.highlights.map((line, index) => `${index + 1}. ${line}`).join("\n")}`,
               categoryId: categoryId ?? "cat_pdf",
               subjectId: doc.subjectId,
               courseId: doc.courseId,

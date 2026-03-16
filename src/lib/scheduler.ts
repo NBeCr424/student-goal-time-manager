@@ -56,6 +56,7 @@ export function generateGoalSessions(goal: Goal): GoalSession[] {
       endTime,
       durationMinutes,
       status: "planned",
+      syncedToCalendar: false,
     });
   }
 

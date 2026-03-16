@@ -27,6 +27,7 @@ export type QuickNoteStatus = "draft" | "imported";
 export type SessionStatus = "planned" | "done" | "missed";
 
 export type CalendarViewMode = "month" | "week";
+export type CalendarSyncStatus = "not_synced" | "synced";
 
 export interface User {
   id: string;
@@ -72,6 +73,7 @@ export interface GoalSession {
   endTime: string;
   durationMinutes: number;
   status: SessionStatus;
+  syncedToCalendar?: boolean;
 }
 
 export interface WeeklyPlan {
@@ -90,6 +92,11 @@ export interface Task {
   description: string;
   completed: boolean;
   dueDate: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes?: number;
+  isScheduled?: boolean;
+  syncedToCalendar?: boolean;
   priority: TaskPriority;
   planType: TaskPlanType;
   order: number;
@@ -253,6 +260,18 @@ export interface ReviewEntry {
   improveOneThing: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startDateTime: string;
+  endDateTime: string;
+  description?: string;
+  location?: string;
+  sourceType: "task" | "goal_session" | "goal_deadline";
+  sourceId: string;
+  syncStatus: CalendarSyncStatus;
 }
 
 export interface CalendarDaySummary {
