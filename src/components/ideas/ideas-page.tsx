@@ -120,7 +120,7 @@ export function IdeasPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => actions.convertIdeaToKnowledge(idea.id, "method_library")}
+                      onClick={() => actions.convertIdeaToKnowledge(idea.id, "cat_method")}
                       className="rounded-lg border border-ink/15 bg-white px-2.5 py-1.5 text-xs text-ink/75"
                     >
                       转知识库

@@ -1,4 +1,4 @@
-﻿export type GoalStatus = "not_started" | "active" | "paused" | "completed";
+export type GoalStatus = "not_started" | "active" | "paused" | "completed";
 export type GoalPriority = "high" | "medium" | "low";
 export type PreferredTimeOfDay = "morning" | "afternoon" | "evening" | "flexible";
 
@@ -8,7 +8,21 @@ export type TaskPlanType = "today_top" | "today_secondary" | "today_other" | "we
 export type IdeaStatus = "unprocessed" | "archived" | "converted_task" | "converted_knowledge";
 export type IdeaCategory = "study_inspiration" | "temporary_todo" | "review_thought" | "project_idea" | "life_note";
 
-export type KnowledgeCategory = "course_notes" | "method_library" | "wrong_question" | "link_collection";
+export type KnowledgeItemType =
+  | "note"
+  | "method"
+  | "mistake"
+  | "link"
+  | "pdf_summary"
+  | "quick_note_import"
+  | "topic_summary"
+  | "chapter_summary";
+
+export type KnowledgeNodeType = "chapter" | "topic" | "summary" | "resource";
+
+export type KnowledgeLearningStatus = "not_started" | "learning" | "mastered" | "review_pending";
+
+export type QuickNoteStatus = "draft" | "imported";
 
 export type SessionStatus = "planned" | "done" | "missed";
 
@@ -86,15 +100,93 @@ export interface Task {
   updatedAt: string;
 }
 
+export interface KnowledgeCategory {
+  id: string;
+  name: string;
+  parentId?: string;
+  order: number;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KnowledgeSubject {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+}
+
+export interface KnowledgeCourse {
+  id: string;
+  subjectId: string;
+  name: string;
+  description: string;
+  order: number;
+  status: KnowledgeLearningStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KnowledgeNode {
+  id: string;
+  courseId: string;
+  parentNodeId?: string;
+  title: string;
+  type: KnowledgeNodeType;
+  description: string;
+  order: number;
+  status: KnowledgeLearningStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface KnowledgeItem {
   id: string;
   title: string;
-  category: KnowledgeCategory;
+  type: KnowledgeItemType;
   tags: string[];
   content: string;
+  categoryId?: string;
+  subjectId?: string;
+  courseId?: string;
+  nodeId?: string;
+  sourceDocumentId?: string;
+  sourceQuickNoteId?: string;
   relatedTaskIds: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface QuickNote {
+  id: string;
+  title?: string;
+  content: string;
+  tags: string[];
+  categoryId?: string;
+  subjectId?: string;
+  courseId?: string;
+  nodeId?: string;
+  status: QuickNoteStatus;
+  importedKnowledgeItemId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PdfKnowledgeDocument {
+  id: string;
+  title: string;
+  fileName: string;
+  fileSizeKb: number;
+  subjectId?: string;
+  courseId?: string;
+  nodeId?: string;
+  summary: string;
+  keywords: string[];
+  highlights: string[];
+  createdAt: string;
+  updatedAt: string;
+  savedAsKnowledgeItemId?: string;
 }
 
 export interface Idea {
@@ -151,9 +243,48 @@ export interface AppState {
   weeklyPlans: WeeklyPlan[];
   tasks: Task[];
   knowledgeItems: KnowledgeItem[];
+  knowledgeCategories: KnowledgeCategory[];
+  knowledgeSubjects: KnowledgeSubject[];
+  knowledgeCourses: KnowledgeCourse[];
+  knowledgeNodes: KnowledgeNode[];
+  quickNotes: QuickNote[];
+  pdfDocuments: PdfKnowledgeDocument[];
   ideas: Idea[];
   reviews: ReviewEntry[];
   parsedImportTasks: ParsedImportTask[];
+}
+
+export interface KnowledgeItemInput {
+  title: string;
+  type: KnowledgeItemType;
+  tags: string[];
+  content: string;
+  categoryId?: string;
+  subjectId?: string;
+  courseId?: string;
+  nodeId?: string;
+  sourceDocumentId?: string;
+  sourceQuickNoteId?: string;
+  relatedTaskIds: string[];
+}
+
+export interface QuickNoteInput {
+  title?: string;
+  content: string;
+  tags: string[];
+  categoryId?: string;
+  subjectId?: string;
+  courseId?: string;
+  nodeId?: string;
+}
+
+export interface PdfUploadInput {
+  title: string;
+  fileName: string;
+  fileSizeKb: number;
+  subjectId?: string;
+  courseId?: string;
+  nodeId?: string;
 }
 
 export interface NewGoalInput {

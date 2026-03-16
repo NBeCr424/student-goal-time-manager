@@ -10,7 +10,7 @@
 
 - 首页：今日三件事、天气和穿衣建议、今日时间安排、紧急目标提醒、收件箱提醒、晚间复盘入口
 - 计划：长期目标（SMART + 时间规划字段）、周计划 PDCA、今日任务、目标驱动日历（月/周）、外部任务 mock 导入
-- 知识库：课程笔记 / 方法库 / 错题整理 / 链接收藏，支持搜索、分类筛选、详情
+- 知识库：树状课程知识地图（学科 -> 课程 -> 章节/专题/总结 -> 内容），支持分类管理、知识 CRUD、速记、PDF mock 分析与任务联动
 - 想法：脑内收件箱，支持转任务、转知识库、归档
 - 我的：今日完成数、本周完成数、连续复盘天数，预留黄金时段分析等能力
 
@@ -92,7 +92,13 @@ npm run start
 - `GoalSession`
 - `WeeklyPlan`
 - `Task`
+- `KnowledgeCategory`
+- `KnowledgeSubject`
+- `KnowledgeCourse`
+- `KnowledgeNode`
 - `KnowledgeItem`
+- `QuickNote`
+- `PdfKnowledgeDocument`
 - `Idea`
 - `WeatherInfo`
 - `ReviewEntry`
@@ -104,6 +110,9 @@ npm run start
 - 一个 `Goal` 可关联多个 `Task`
 - 一个 `Goal` 可关联多个 `GoalSession`
 - 一个 `Task` 可关联多个 `KnowledgeItem`
+- 一个 `Subject` 可包含多个 `Course`
+- 一个 `Course` 可包含多个 `KnowledgeNode`（章节/专题/总结）
+- 一个 `KnowledgeNode` 可挂载多个 `KnowledgeItem` / `QuickNote` / `PdfKnowledgeDocument`
 - 一个 `Idea` 可转为 `Task` 或 `KnowledgeItem`
 
 ## 时间安排逻辑（MVP）
