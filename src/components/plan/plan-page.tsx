@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { CalendarPanel } from "@/components/plan/calendar-panel";
 import { GoalsPanel } from "@/components/plan/goals-panel";
 import { ImportPanel } from "@/components/plan/import-panel";
@@ -19,16 +18,14 @@ const tabs: Array<{ id: PlanTab; label: string }> = [
 ];
 
 export function PlanPage() {
-  const searchParams = useSearchParams();
-  const queryTab = searchParams.get("tab") as PlanTab | null;
-
-  const [activeTab, setActiveTab] = useState<PlanTab>(queryTab ?? "goals");
+  const [activeTab, setActiveTab] = useState<PlanTab>("goals");
 
   useEffect(() => {
+    const queryTab = new URLSearchParams(window.location.search).get("tab") as PlanTab | null;
     if (queryTab && tabs.some((tab) => tab.id === queryTab)) {
       setActiveTab(queryTab);
     }
-  }, [queryTab]);
+  }, []);
 
   const tabContent = useMemo(() => {
     if (activeTab === "goals") {
