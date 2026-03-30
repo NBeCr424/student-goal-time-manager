@@ -1,4 +1,4 @@
-import { KnowledgeItemType, KnowledgeLearningStatus, KnowledgeNodeType } from "@/lib/types";
+﻿import { KnowledgeItemType, KnowledgeLearningStatus, KnowledgeNodeType } from "@/lib/types";
 
 export const knowledgeItemTypeOptions: Array<{ label: string; value: KnowledgeItemType }> = [
   { label: "普通笔记", value: "note" },

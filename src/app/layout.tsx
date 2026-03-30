@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Noto_Sans_SC, Space_Grotesk } from "next/font/google";
 import "@/app/globals.css";
 import { AppFrame } from "@/components/layout/app-frame";
@@ -19,11 +19,14 @@ export const metadata: Metadata = {
   description: "面向学生的轻量目标管理、三件事执行、复盘与目标驱动日历。",
   applicationName: "学生时间管理",
   manifest: "/manifest.webmanifest",
-  themeColor: "#6fd3c8",
   icons: {
     icon: "/icons/icon-192.svg",
     apple: "/icons/icon-192.svg",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6fd3c8",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

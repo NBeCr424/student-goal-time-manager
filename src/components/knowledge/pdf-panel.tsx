@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   KnowledgeCategory,
   KnowledgeCourse,
@@ -35,7 +35,7 @@ export function PdfPanel({
   const [subjectId, setSubjectId] = useState("");
   const [courseId, setCourseId] = useState("");
   const [nodeId, setNodeId] = useState("");
-  const [saveCategoryId, setSaveCategoryId] = useState("cat_pdf");
+  const [saveCategoryId, setSaveCategoryId] = useState("cat_uncategorized");
 
   const availableCourses = useMemo(
     () => courses.filter((course) => !subjectId || course.subjectId === subjectId),
@@ -45,6 +45,14 @@ export function PdfPanel({
     () => nodes.filter((node) => !courseId || node.courseId === courseId),
     [courseId, nodes],
   );
+
+  useEffect(() => {
+    if (categories.some((category) => category.id === saveCategoryId)) {
+      return;
+    }
+    const nextCategoryId = categories.find((category) => category.id === "cat_uncategorized")?.id ?? categories[0]?.id ?? "";
+    setSaveCategoryId(nextCategoryId);
+  }, [categories, saveCategoryId]);
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -85,10 +93,8 @@ export function PdfPanel({
   return (
     <div className="space-y-3">
       <form onSubmit={submit} className="rounded-xl border border-ink/10 bg-white p-3">
-        <h4 className="text-sm font-semibold text-ink">上传 PDF（MVP Mock 分析）</h4>
-        <p className="mt-1 text-xs text-ink/55">
-          当前为 mock 分析流程。后续可接真实 PDF 解析和 AI 摘要接口。
-        </p>
+        <h4 className="text-sm font-semibold text-ink">上传 PDF</h4>
+        <p className="mt-1 text-xs text-ink/55">仅用于本地/云端保存与阅读。</p>
 
         <div className="mt-2 grid gap-2 md:grid-cols-[1fr_1fr]">
           <input
@@ -97,7 +103,12 @@ export function PdfPanel({
             placeholder="文档标题"
             className="rounded-lg border border-ink/15 px-3 py-2 text-sm"
           />
-          <input type="file" accept=".pdf" onChange={onFileChange} className="rounded-lg border border-ink/15 px-3 py-2 text-sm" />
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={onFileChange}
+            className="rounded-lg border border-ink/15 px-3 py-2 text-sm"
+          />
         </div>
 
         <div className="mt-2 grid gap-2 md:grid-cols-3">
@@ -149,7 +160,7 @@ export function PdfPanel({
         </div>
 
         <button type="submit" className="mt-3 rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white">
-          上传并生成摘要
+          上传文档
         </button>
       </form>
 
@@ -189,21 +200,23 @@ export function PdfPanel({
                   </p>
                 )}
 
-                <p className="mt-2 text-sm text-ink/80">{doc.summary}</p>
-
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {doc.keywords.map((keyword) => (
-                    <span key={keyword} className="badge border-ink/15 bg-paper text-ink/70">
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-
-                <ul className="mt-2 space-y-1 text-xs text-ink/70">
-                  {doc.highlights.map((highlight) => (
-                    <li key={highlight}>- {highlight}</li>
-                  ))}
-                </ul>
+                {doc.summary && <p className="mt-2 text-sm text-ink/80">{doc.summary}</p>}
+                {doc.keywords.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {doc.keywords.map((keyword) => (
+                      <span key={keyword} className="badge border-ink/15 bg-paper text-ink/70">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {doc.highlights.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-xs text-ink/70">
+                    {doc.highlights.map((highlight) => (
+                      <li key={highlight}>- {highlight}</li>
+                    ))}
+                  </ul>
+                )}
 
                 <button
                   type="button"
@@ -211,7 +224,7 @@ export function PdfPanel({
                   onClick={() => onSaveSummary(doc.id, saveCategoryId)}
                   className="mt-2 rounded-lg bg-mint px-3 py-1.5 text-xs font-medium text-ink disabled:opacity-40"
                 >
-                  {doc.savedAsKnowledgeItemId ? "已保存为知识条目" : "保存摘要到知识库"}
+                  {doc.savedAsKnowledgeItemId ? "已保存为知识条目" : "保存到知识库"}
                 </button>
               </li>
             );

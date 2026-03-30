@@ -22,6 +22,7 @@
 - React Context + 本地状态
 - localStorage 持久化
 - Mock 数据
+- Supabase Auth + Supabase Database（登录与云端同步）
 - 响应式布局（移动端优先）
 - PWA 预留（manifest + 图标 + sw 占位）
 
@@ -31,6 +32,7 @@
 
 ```bash
 npm install
+# 复制环境变量（将 .env.example 另存为 .env.local）
 npm run dev
 ```
 
@@ -53,6 +55,8 @@ npm run start
 │  └─ sw.js                      # Service Worker 占位（MVP）
 ├─ src/
 │  ├─ app/
+│  │  ├─ auth/login/            # 登录页
+│  │  ├─ auth/register/         # 注册页
 │  │  ├─ goals/[goalId]/         # 目标详情页（含时间安排区）
 │  │  ├─ ideas/                  # 想法页路由
 │  │  ├─ knowledge/              # 知识库页路由
@@ -62,6 +66,7 @@ npm run start
 │  │  ├─ layout.tsx              # 根布局（含导航和 Provider）
 │  │  └─ page.tsx                # 首页路由
 │  ├─ components/
+│  │  ├─ auth/                   # 账号入口与登录/注册表单
 │  │  ├─ home/                   # Dashboard 组件
 │  │  ├─ ideas/                  # 想法模块组件
 │  │  ├─ knowledge/              # 知识库组件
@@ -69,14 +74,19 @@ npm run start
 │  │  ├─ plan/                   # 计划模块子组件（目标、周计划、日历等）
 │  │  └─ profile/                # 我的模块组件
 │  ├─ lib/
+│  │  ├─ cloud-sync.ts           # Supabase 云端读写与同步工具
 │  │  ├─ date.ts                 # 日期工具
 │  │  ├─ id.ts                   # ID 工具
 │  │  ├─ mock-data.ts            # 初始 mock 数据
 │  │  ├─ scheduler.ts            # GoalSession 生成逻辑（可替换）
 │  │  ├─ storage.ts              # localStorage 持久化
+│  │  ├─ supabase.ts             # Supabase 客户端初始化
 │  │  └─ types.ts                # 核心类型定义
 │  └─ store/
-│     └─ app-store.tsx           # 全局状态管理与业务 action
+│     ├─ app-store.tsx           # 全局状态管理与业务 action
+│     └─ auth-sync-store.tsx     # 认证状态与云端同步状态管理
+├─ supabase/
+│  └─ schema.sql                 # Supabase 数据表与 RLS 策略
 ├─ .env.example
 ├─ .gitignore
 ├─ package.json
@@ -125,6 +135,52 @@ npm run start
 4. 默认偏好时段为 `evening`
 
 > 代码中已注释为可替换智能排程算法。
+
+## 登录与云端同步（MVP）
+
+已接入：
+
+- Supabase Auth：邮箱注册 / 登录 / 退出
+- Supabase Database：云端同步个人数据
+- 游客模式：未登录时继续使用本地 localStorage
+- 登录后：优先读取云端数据，并自动同步
+- 手动入口：在“我的 > 概览”中可“立即同步云端”与“导入游客本地数据”
+
+当前已同步数据范围：
+
+- `goals`
+- `tasks`
+- `weekly_plans`
+- `goal_sessions`
+- `review_entries`
+- `knowledge_categories`
+- `knowledge_subjects`
+- `knowledge_courses`
+- `knowledge_nodes`
+- `knowledge_items`
+- `quick_notes`
+- `pdf_documents`
+- `ideas`
+- `finance_categories`
+- `finance_records`
+- `budget_plans`
+- `task_import_inbox`
+- `focus_sessions`
+- `golden_time_insights`
+- `user_settings`
+
+后续可继续扩展：`parsed_import_tasks`、`url_import_jobs`、`task_knowledge_relations` 等。
+
+### Supabase 初始化
+
+1. 在 Supabase 新建项目  
+2. 执行 [supabase/schema.sql](supabase/schema.sql)  
+3. 在 `.env.local` 配置：
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
 
 ## GitHub 上传建议
 

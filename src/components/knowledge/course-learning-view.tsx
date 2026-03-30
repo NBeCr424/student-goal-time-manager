@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 import {
@@ -52,8 +52,8 @@ export function CourseLearningView({
   if (!selectedCourse) {
     return (
       <article className="card-surface p-4 md:p-5">
-        <h3 className="section-title">Course View</h3>
-        <p className="mt-2 text-sm text-ink/65">Pick one course from the tree to view chapter/topic/summary progress.</p>
+        <h3 className="section-title">课程视图</h3>
+        <p className="mt-2 text-sm text-ink/65">先选择课程，再查看章节、专题、总结和关联资料。</p>
       </article>
     );
   }
@@ -75,7 +75,7 @@ export function CourseLearningView({
         <p className="mt-2 text-sm text-ink/70">{selectedNode.description}</p>
 
         <div className="mt-3 flex items-center gap-2 text-sm">
-          <span className="text-ink/65">Learning Status</span>
+          <span className="text-ink/65">学习状态</span>
           <select
             value={selectedNode.status}
             onChange={(event) => onUpdateNodeStatus(selectedNode.id, event.target.value as KnowledgeLearningStatus)}
@@ -91,45 +91,44 @@ export function CourseLearningView({
 
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <section className="rounded-xl border border-ink/10 bg-white p-3">
-            <h4 className="text-sm font-semibold text-ink">Node Knowledge Items</h4>
+            <h4 className="text-sm font-semibold text-ink">本节点知识条目</h4>
             <ul className="mt-2 space-y-1 text-sm text-ink/80">
               {nodeItems.map((item) => (
                 <li key={item.id}>- {item.title}</li>
               ))}
             </ul>
-            {nodeItems.length === 0 && <p className="mt-2 text-xs text-ink/60">No items yet.</p>}
+            {nodeItems.length === 0 && <p className="mt-2 text-xs text-ink/60">暂无条目。</p>}
           </section>
 
           <section className="rounded-xl border border-ink/10 bg-white p-3">
-            <h4 className="text-sm font-semibold text-ink">Quick Notes</h4>
+            <h4 className="text-sm font-semibold text-ink">本节点速记</h4>
             <ul className="mt-2 space-y-1 text-sm text-ink/80">
               {nodeNotes.map((note) => (
                 <li key={note.id}>- {note.title || note.content.slice(0, 24)}</li>
               ))}
             </ul>
-            {nodeNotes.length === 0 && <p className="mt-2 text-xs text-ink/60">No quick notes.</p>}
+            {nodeNotes.length === 0 && <p className="mt-2 text-xs text-ink/60">暂无速记。</p>}
           </section>
 
           <section className="rounded-xl border border-ink/10 bg-white p-3">
-            <h4 className="text-sm font-semibold text-ink">PDF Resources</h4>
+            <h4 className="text-sm font-semibold text-ink">本节点 PDF 资料</h4>
             <ul className="mt-2 space-y-1 text-sm text-ink/80">
               {nodeDocs.map((doc) => (
                 <li key={doc.id}>- {doc.title}</li>
               ))}
             </ul>
-            {nodeDocs.length === 0 && <p className="mt-2 text-xs text-ink/60">No PDF docs.</p>}
+            {nodeDocs.length === 0 && <p className="mt-2 text-xs text-ink/60">暂无 PDF 资料。</p>}
           </section>
 
           <section className="rounded-xl border border-ink/10 bg-white p-3">
-            <h4 className="text-sm font-semibold text-ink">Related Tasks and Mistakes</h4>
+            <h4 className="text-sm font-semibold text-ink">关联任务与错题</h4>
             <ul className="mt-2 space-y-1 text-sm text-ink/80">
               {relatedTasks.map((task) => (
                 <li key={task.id}>- {task.title}</li>
               ))}
             </ul>
-            {relatedTasks.length === 0 && <p className="mt-2 text-xs text-ink/60">No related tasks.</p>}
-
-            <p className="mt-3 text-xs font-semibold text-ink/60">Mistake items: {mistakeItems.length}</p>
+            {relatedTasks.length === 0 && <p className="mt-2 text-xs text-ink/60">暂无关联任务。</p>}
+            <p className="mt-3 text-xs text-ink/60">错题条目：{mistakeItems.length}</p>
           </section>
         </div>
       </article>
@@ -149,12 +148,12 @@ export function CourseLearningView({
 
   return (
     <article className="card-surface p-4 md:p-5">
-      <p className="soft-label">Course View</p>
+      <p className="soft-label">课程视图</p>
       <h3 className="mt-1 text-lg font-semibold text-ink">{selectedCourse.name}</h3>
       <p className="mt-2 text-sm text-ink/70">{selectedCourse.description}</p>
 
       <div className="mt-3 flex items-center gap-2 text-sm">
-        <span className="text-ink/65">Course Status</span>
+        <span className="text-ink/65">课程状态</span>
         <select
           value={selectedCourse.status}
           onChange={(event) => onUpdateCourseStatus(selectedCourse.id, event.target.value as KnowledgeLearningStatus)}
@@ -166,12 +165,12 @@ export function CourseLearningView({
             </option>
           ))}
         </select>
-        <span className="text-xs text-ink/55">Current: {learningStatusLabel[selectedCourse.status]}</span>
+        <span className="text-xs text-ink/55">当前：{learningStatusLabel[selectedCourse.status]}</span>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <section className="rounded-xl border border-ink/10 bg-white p-3">
-          <h4 className="text-sm font-semibold text-ink">Chapter List</h4>
+          <h4 className="text-sm font-semibold text-ink">章节列表</h4>
           <ul className="mt-2 space-y-1 text-sm text-ink/80">
             {chapterNodes.map((node) => (
               <li key={node.id}>- {node.title}</li>
@@ -180,7 +179,7 @@ export function CourseLearningView({
         </section>
 
         <section className="rounded-xl border border-ink/10 bg-white p-3">
-          <h4 className="text-sm font-semibold text-ink">Topic List</h4>
+          <h4 className="text-sm font-semibold text-ink">专题列表</h4>
           <ul className="mt-2 space-y-1 text-sm text-ink/80">
             {topicNodes.map((node) => (
               <li key={node.id}>- {node.title}</li>
@@ -189,7 +188,7 @@ export function CourseLearningView({
         </section>
 
         <section className="rounded-xl border border-ink/10 bg-white p-3">
-          <h4 className="text-sm font-semibold text-ink">Summary Pages</h4>
+          <h4 className="text-sm font-semibold text-ink">总结页</h4>
           <ul className="mt-2 space-y-1 text-sm text-ink/80">
             {summaryNodes.map((node) => (
               <li key={node.id}>- {node.title}</li>
@@ -198,30 +197,30 @@ export function CourseLearningView({
         </section>
 
         <section className="rounded-xl border border-ink/10 bg-white p-3">
-          <h4 className="text-sm font-semibold text-ink">Recently Updated</h4>
+          <h4 className="text-sm font-semibold text-ink">最近更新</h4>
           <ul className="mt-2 space-y-1 text-sm text-ink/80">
             {recentItems.map((item) => (
               <li key={item.id}>- {item.title}</li>
             ))}
           </ul>
-          {recentItems.length === 0 && <p className="mt-2 text-xs text-ink/60">No updates yet.</p>}
+          {recentItems.length === 0 && <p className="mt-2 text-xs text-ink/60">暂无更新。</p>}
         </section>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3 text-xs text-ink/70">
-        <p className="rounded-lg bg-white p-2">Knowledge items: {courseItems.length}</p>
-        <p className="rounded-lg bg-white p-2">PDF documents: {courseDocs.length}</p>
-        <p className="rounded-lg bg-white p-2">Quick notes: {courseNotes.length}</p>
+        <p className="rounded-lg bg-white p-2">知识条目：{courseItems.length}</p>
+        <p className="rounded-lg bg-white p-2">PDF 文档：{courseDocs.length}</p>
+        <p className="rounded-lg bg-white p-2">速记数量：{courseNotes.length}</p>
       </div>
 
       <section className="mt-3 rounded-xl border border-ink/10 bg-white p-3">
-        <h4 className="text-sm font-semibold text-ink">Related Tasks</h4>
+        <h4 className="text-sm font-semibold text-ink">关联任务</h4>
         <ul className="mt-2 space-y-1 text-sm text-ink/80">
           {relatedTasks.map((task) => (
             <li key={task.id}>- {task.title}</li>
           ))}
         </ul>
-        {relatedTasks.length === 0 && <p className="mt-1 text-xs text-ink/60">No related tasks.</p>}
+        {relatedTasks.length === 0 && <p className="mt-1 text-xs text-ink/60">暂无关联任务。</p>}
       </section>
     </article>
   );

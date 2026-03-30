@@ -1,0 +1,156 @@
+{
+  "info": {
+    "name": "Student Time Manager - Schedule Import API v1",
+    "_postman_id": "1d4f4d0d-72f8-4702-baa5-c0e8a5dd63e9",
+    "description": "外部 App 日程导入 API。先用用户 access token 创建 integration token，再用 integration token 调导入接口。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://student-goal-time-manager.vercel.app"
+    },
+    {
+      "key": "userAccessToken",
+      "value": ""
+    },
+    {
+      "key": "integrationToken",
+      "value": ""
+    },
+    {
+      "key": "tokenId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. 创建集成令牌（站内）",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{userAccessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"飞书日历同步\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/integrations/tokens",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "integrations",
+            "tokens"
+          ]
+        },
+        "description": "使用当前登录用户 access token 创建 integration token。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let json = {};",
+              "try { json = pm.response.json(); } catch (e) {}",
+              "if (json.token) pm.collectionVariables.set('integrationToken', json.token);",
+              "if (json.item && json.item.id) pm.collectionVariables.set('tokenId', json.item.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. 获取令牌列表（站内）",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{userAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/integrations/tokens",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "integrations",
+            "tokens"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. 停用令牌（站内）",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{userAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/integrations/tokens/{{tokenId}}/revoke",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "integrations",
+            "tokens",
+            "{{tokenId}}",
+            "revoke"
+          ]
+        },
+        "description": "tokenId 可由“创建令牌”自动写入变量。"
+      }
+    },
+    {
+      "name": "4. 导入外部日程（对外）",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{integrationToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"source\": \"other_app\",\n  \"items\": [\n    {\n      \"externalId\": \"evt_1001\",\n      \"title\": \"高数复习\",\n      \"startAt\": \"2026-03-20T19:00:00+08:00\",\n      \"endAt\": \"2026-03-20T20:30:00+08:00\",\n      \"allDay\": false,\n      \"note\": \"做第3章习题\",\n      \"location\": \"图书馆\"\n    },\n    {\n      \"externalId\": \"evt_1002\",\n      \"title\": \"英语阅读\",\n      \"allDay\": true\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/integrations/schedule/import",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "integrations",
+            "schedule",
+            "import"
+          ]
+        },
+        "description": "外部系统使用 integration token 调此接口。"
+      }
+    }
+  ]
+}

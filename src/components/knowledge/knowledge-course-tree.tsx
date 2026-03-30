@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { KnowledgeCourse, KnowledgeNode, KnowledgeSubject } from "@/lib/types";
 import { knowledgeNodeTypeLabel } from "@/components/knowledge/knowledge-constants";
@@ -66,9 +66,7 @@ export function KnowledgeCourseTree({
                             <button
                               type="button"
                               className={`w-full rounded-md px-2 py-1 text-left text-xs transition ${
-                                selectedNodeId === node.id
-                                  ? "bg-mint/35 text-ink"
-                                  : "text-ink/70 hover:bg-white/80"
+                                selectedNodeId === node.id ? "bg-mint/35 text-ink" : "text-ink/70 hover:bg-white/80"
                               }`}
                               onClick={() => {
                                 onSelectCourse(course.id);

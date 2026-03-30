@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
 import {
@@ -38,7 +38,7 @@ export function KnowledgeEditor({
   onCancel,
 }: KnowledgeEditorProps) {
   const [title, setTitle] = useState(initialItem?.title ?? "");
-  const [type, setType] = useState(initialItem?.type ?? "note");
+  const [type, setType] = useState<KnowledgeItemInput["type"]>(initialItem?.type ?? "note");
   const [tagsInput, setTagsInput] = useState(toTagsInput(initialItem?.tags ?? []));
   const [content, setContent] = useState(initialItem?.content ?? "");
   const [categoryId, setCategoryId] = useState(initialItem?.categoryId ?? "");
@@ -47,43 +47,47 @@ export function KnowledgeEditor({
   const [nodeId, setNodeId] = useState(initialItem?.nodeId ?? defaultNodeId ?? "");
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialItem?.relatedTaskIds ?? []);
 
-  const filteredCourses = useMemo(() => {
+  const sortedCategories = useMemo(() => categories.slice().sort((a, b) => a.order - b.order), [categories]);
+
+  const availableCourses = useMemo(() => {
     if (!subjectId) {
       return courses;
     }
     return courses.filter((course) => course.subjectId === subjectId);
   }, [courses, subjectId]);
 
-  const filteredNodes = useMemo(() => {
+  const availableNodes = useMemo(() => {
     if (!courseId) {
       return nodes;
     }
     return nodes.filter((node) => node.courseId === courseId);
   }, [courseId, nodes]);
 
-  const sortedCategories = useMemo(() => categories.slice().sort((a, b) => a.order - b.order), [categories]);
-
   function toggleTask(taskId: string) {
-    setSelectedTaskIds((prev) =>
-      prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId],
-    );
+    setSelectedTaskIds((prev) => (prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]));
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
 
+    const cleanTitle = title.trim();
+    const cleanContent = content.trim();
+    if (!cleanTitle || !cleanContent) {
+      return;
+    }
+
     onSave({
-      title,
+      title: cleanTitle,
       type,
       tags: parseTags(tagsInput),
-      content,
-      categoryId: categoryId || undefined,
+      content: cleanContent,
+      categoryId: categoryId || "cat_uncategorized",
       subjectId: subjectId || undefined,
       courseId: courseId || undefined,
       nodeId: nodeId || undefined,
-      relatedTaskIds: selectedTaskIds,
       sourceDocumentId: initialItem?.sourceDocumentId,
       sourceQuickNoteId: initialItem?.sourceQuickNoteId,
+      relatedTaskIds: selectedTaskIds,
     });
   }
 
@@ -117,7 +121,7 @@ export function KnowledgeEditor({
           onChange={(event) => setCategoryId(event.target.value)}
           className="rounded-xl border border-ink/15 px-3 py-2 text-sm"
         >
-          <option value="">无分类</option>
+          <option value="">未分类</option>
           {sortedCategories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.parentId ? "- " : ""}
@@ -161,7 +165,7 @@ export function KnowledgeEditor({
           className="rounded-xl border border-ink/15 px-3 py-2 text-sm"
         >
           <option value="">无课程归属</option>
-          {filteredCourses.map((course) => (
+          {availableCourses.map((course) => (
             <option key={course.id} value={course.id}>
               {course.name}
             </option>
@@ -174,7 +178,7 @@ export function KnowledgeEditor({
           className="rounded-xl border border-ink/15 px-3 py-2 text-sm"
         >
           <option value="">无章节/专题归属</option>
-          {filteredNodes.map((node) => (
+          {availableNodes.map((node) => (
             <option key={node.id} value={node.id}>
               {node.title}
             </option>
@@ -185,7 +189,7 @@ export function KnowledgeEditor({
       <textarea
         value={content}
         onChange={(event) => setContent(event.target.value)}
-        rows={6}
+        rows={7}
         placeholder="正文内容"
         className="mt-2 w-full rounded-xl border border-ink/15 px-3 py-2 text-sm"
         required
@@ -210,7 +214,7 @@ export function KnowledgeEditor({
 
       <div className="mt-3 flex gap-2">
         <button type="submit" className="rounded-xl bg-ink px-4 py-2 text-sm font-medium text-white">
-          保存知识
+          保存
         </button>
         <button
           type="button"

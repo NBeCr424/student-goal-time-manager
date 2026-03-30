@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
 import {
@@ -43,12 +43,17 @@ const initialDraft: QuickNoteDraft = {
   nodeId: "",
 };
 
+const quickNoteStatusLabel: Record<QuickNote["status"], string> = {
+  draft: "未导入",
+  imported: "已导入",
+};
+
 function toInput(draft: QuickNoteDraft): QuickNoteInput {
   return {
     title: draft.title?.trim() || undefined,
-    content: draft.content,
+    content: draft.content.trim(),
     tags: parseTags(draft.tagsInput),
-    categoryId: draft.categoryId || undefined,
+    categoryId: draft.categoryId || "cat_uncategorized",
     subjectId: draft.subjectId || undefined,
     courseId: draft.courseId || undefined,
     nodeId: draft.nodeId || undefined,
@@ -68,29 +73,9 @@ export function QuickNotePanel({
 }: QuickNotePanelProps) {
   const [draft, setDraft] = useState<QuickNoteDraft>(initialDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState<QuickNoteDraft | null>(null);
 
   const sortedCategories = useMemo(() => categories.slice().sort((a, b) => a.order - b.order), [categories]);
-
-  const editDraft = useMemo(() => {
-    if (!editingId) {
-      return null;
-    }
-    const target = quickNotes.find((note) => note.id === editingId);
-    if (!target) {
-      return null;
-    }
-    return {
-      title: target.title ?? "",
-      content: target.content,
-      tagsInput: toTagsInput(target.tags),
-      categoryId: target.categoryId ?? "",
-      subjectId: target.subjectId ?? "",
-      courseId: target.courseId ?? "",
-      nodeId: target.nodeId ?? "",
-    } satisfies QuickNoteDraft;
-  }, [editingId, quickNotes]);
-
-  const [editingDraft, setEditingDraft] = useState<QuickNoteDraft | null>(null);
 
   function startEdit(noteId: string) {
     const target = quickNotes.find((note) => note.id === noteId);
@@ -123,7 +108,7 @@ export function QuickNotePanel({
     <div className="space-y-3">
       <form onSubmit={submitNew} className="rounded-xl border border-ink/10 bg-white p-3">
         <h4 className="text-sm font-semibold text-ink">新建速记</h4>
-        <p className="mt-1 text-xs text-ink/55">速记可先独立存在，后续一键导入知识库。</p>
+        <p className="mt-1 text-xs text-ink/55">先快速记录，再选择是否导入正式知识条目。</p>
 
         <input
           value={draft.title}
@@ -154,7 +139,7 @@ export function QuickNotePanel({
             onChange={(event) => setDraft((prev) => ({ ...prev, categoryId: event.target.value }))}
             className="rounded-lg border border-ink/15 px-3 py-2 text-sm"
           >
-            <option value="">无分类</option>
+            <option value="">未分类</option>
             {sortedCategories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.parentId ? "- " : ""}
@@ -167,7 +152,9 @@ export function QuickNotePanel({
         <div className="mt-2 grid gap-2 md:grid-cols-3">
           <select
             value={draft.subjectId}
-            onChange={(event) => setDraft((prev) => ({ ...prev, subjectId: event.target.value, courseId: "", nodeId: "" }))}
+            onChange={(event) =>
+              setDraft((prev) => ({ ...prev, subjectId: event.target.value, courseId: "", nodeId: "" }))
+            }
             className="rounded-lg border border-ink/15 px-3 py-2 text-sm"
           >
             <option value="">无学科</option>
@@ -223,14 +210,13 @@ export function QuickNotePanel({
             const courseName = courses.find((course) => course.id === note.courseId)?.name;
             const nodeName = nodes.find((node) => node.id === note.nodeId)?.title;
             const editing = editingId === note.id && editingDraft;
-            const safeDraft = editing ? editingDraft : editDraft;
 
             return (
               <li key={note.id} className="rounded-lg border border-ink/10 p-2">
                 {!editing && (
                   <>
                     <div className="flex flex-wrap items-center gap-1">
-                      <span className="badge border-ink/15 bg-paper text-ink/70">{note.status}</span>
+                      <span className="badge border-ink/15 bg-paper text-ink/70">{quickNoteStatusLabel[note.status]}</span>
                       {categoryName && <span className="badge border-ink/15 bg-white text-ink/70">{categoryName}</span>}
                       {courseName && <span className="badge border-ink/15 bg-white text-ink/70">{courseName}</span>}
                     </div>
@@ -267,17 +253,17 @@ export function QuickNotePanel({
                   </>
                 )}
 
-                {editing && safeDraft && (
+                {editing && editingDraft && (
                   <div className="space-y-2">
                     <input
-                      value={safeDraft.title}
+                      value={editingDraft.title}
                       onChange={(event) =>
                         setEditingDraft((prev) => (prev ? { ...prev, title: event.target.value } : prev))
                       }
                       className="w-full rounded border border-ink/15 px-2 py-1 text-sm"
                     />
                     <textarea
-                      value={safeDraft.content}
+                      value={editingDraft.content}
                       onChange={(event) =>
                         setEditingDraft((prev) => (prev ? { ...prev, content: event.target.value } : prev))
                       }
@@ -285,17 +271,18 @@ export function QuickNotePanel({
                       className="w-full rounded border border-ink/15 px-2 py-1 text-sm"
                     />
                     <input
-                      value={safeDraft.tagsInput}
+                      value={editingDraft.tagsInput}
                       onChange={(event) =>
                         setEditingDraft((prev) => (prev ? { ...prev, tagsInput: event.target.value } : prev))
                       }
+                      placeholder="标签，逗号分隔"
                       className="w-full rounded border border-ink/15 px-2 py-1 text-sm"
                     />
                     <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() => {
-                          onUpdate(note.id, toInput(safeDraft));
+                          onUpdate(note.id, toInput(editingDraft));
                           setEditingId(null);
                           setEditingDraft(null);
                         }}
